@@ -1,26 +1,18 @@
-from fastapi import APIRouter, HTTPException
-from ..database import cart_collection
-from ..schemas.cart_schema import CartSchema
+from fastapi import APIRouter
+from ..controllers.cart_controller import get_cart, add_to_cart, remove_from_cart
 
-router = APIRouter(prefix="/cart", tags=["Cart"])
+router = APIRouter()
 
-@router.post("/")
-async def add_to_cart(item: CartSchema):
-    result = await cart_collection.insert_one(item.dict())
-    return {"id": str(result.inserted_id)}
+@router.get("/cart/{user_id}")
+async def get_cart_route(user_id: str):
+    return await get_cart(user_id)
 
-@router.get("/{user_id}")
-async def get_cart(user_id: str):
-    items = []
-    cursor = cart_collection.find({"user_id": user_id})
-    async for item in cursor:
-        item["_id"] = str(item["_id"])
-        items.append(item)
-    return items
+@router.post("/cart/{user_id}/{product_id}")
+async def add_to_cart_route(user_id: str, product_id: str):
+    await add_to_cart(user_id, product_id)
+    return {"detail": "Added to cart"}
 
-@router.delete("/{cart_item_id}")
-async def remove_from_cart(cart_item_id: str):
-    result = await cart_collection.delete_one({"_id": cart_item_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return {"status": "removed"}
+@router.delete("/cart/{user_id}/{product_id}")
+async def remove_from_cart_route(user_id: str, product_id: str):
+    await remove_from_cart(user_id, product_id)
+    return {"detail": "Removed from cart"}

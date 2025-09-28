@@ -1,6 +1,10 @@
 from pydantic import BaseModel
+from typing import List
 
-class CartItemModel(BaseModel):
-    user_id: str
+class CartItem(BaseModel):
     product_id: str
-    quantity: int
+    quantity: int = 1
+
+class Cart(BaseModel):
+    user_id: str
+    items: List[CartItem] = []

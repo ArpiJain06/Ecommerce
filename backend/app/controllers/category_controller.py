@@ -1,32 +1,12 @@
-from models.category import CategoryModel
-from database import category_collection
-from bson import ObjectId
+from ..database import category_collection
 
-class CategoryController:
-    @staticmethod
-    async def create_category(data: dict):
-        category = CategoryModel(**data)
-        result = await category_collection.insert_one(category.dict())
-        return str(result.inserted_id)
+async def get_categories():
+    categories = []
+    async for cat in category_collection.find():
+        cat["_id"] = str(cat["_id"])
+        categories.append(cat)
+    return categories
 
-    @staticmethod
-    async def get_all_categories():
-        categories = await category_collection.find().to_list(100)
-        return categories
-
-    @staticmethod
-    async def get_category_by_id(category_id: str):
-        category = await category_collection.find_one({"_id": ObjectId(category_id)})
-        return category
-
-    @staticmethod
-    async def update_category(category_id: str, data: dict):
-        result = await category_collection.update_one(
-            {"_id": ObjectId(category_id)}, {"$set": data}
-        )
-        return result.modified_count > 0
-
-    @staticmethod
-    async def delete_category(category_id: str):
-        result = await category_collection.delete_one({"_id": ObjectId(category_id)})
-        return result.deleted_count > 0
+async def create_category(name: str):
+    result = await category_collection.insert_one({"name": name})
+    return {"id": str(result.inserted_id), "name": name}

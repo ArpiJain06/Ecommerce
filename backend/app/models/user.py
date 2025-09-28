@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 class UserModel(BaseModel):
-    email: str
+    username: str
     password: str
     role: str  # "admin" or "user"
