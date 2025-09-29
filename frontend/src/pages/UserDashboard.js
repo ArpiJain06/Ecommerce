@@ -1,4 +1,3 @@
-// src/pages/UserDashboard.js
 import { useEffect, useState, useCallback, useContext } from "react";
 import {
   Container,
@@ -19,7 +18,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { getCart, addToCart, removeFromCart } from "../api/cart";
-import { getProducts } from "../api/api";
+import { getProducts } from "../api/product";
 import { AuthContext } from "../context/AuthContext";
 
 const UserDashboard = () => {

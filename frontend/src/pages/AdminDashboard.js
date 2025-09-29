@@ -37,11 +37,10 @@ const AdminDashboard = () => {
     return;
     }
     try {
-      // Make sure the payload matches backend fields exactly
       const productToSend = {
         name: newProduct.name,
-        price: parseFloat(newProduct.price), // convert to number
-        category_id: newProduct.category,    // must match 'category_id'
+        price: parseFloat(newProduct.price),
+        category_id: newProduct.category,
         description: newProduct.description,
       };
       console.log("aaaaaaa", productToSend);
@@ -75,7 +74,6 @@ const AdminDashboard = () => {
         Admin Dashboard
       </Typography>
 
-      {/* Add Product Form */}
       <Box
         sx={{
           display: "flex",

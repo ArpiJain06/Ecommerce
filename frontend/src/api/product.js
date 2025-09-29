@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8000"; // Your FastAPI URL
+const API_URL = "http://localhost:8000";
 
 // Fetch all products (no auth required)
 export const getProducts = async () => {

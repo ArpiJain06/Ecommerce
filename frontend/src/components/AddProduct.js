@@ -10,22 +10,19 @@ const AddProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Build the payload
     const payload = {
       name,
       category_id: categoryId,
       price: parseFloat(price),
-      ...(description && { description }) // only include if non-empty
+      ...(description && { description })
     };
 
-    // Print payload to frontend console
     console.log("Payload being sent:", payload);
 
     try {
       const response = await axios.post("http://127.0.0.1:8000/products", payload);
       console.log("Product added:", response.data);
       
-      // Optionally clear form
       setName("");
       setCategoryId("");
       setPrice("");
