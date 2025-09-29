@@ -1,48 +1,49 @@
-# Handles product creation, update, deletion for the admin
-# Handles product retrieval for the user
-
-from app.database import db
-from app.models.product import Product
+from ..database import product_collection
 from bson import ObjectId
+from fastapi import HTTPException
 
-product_collection = db["products"]
-
-def product_helper(product) -> dict:
-    return {
-        "id": str(product["_id"]),
-        "name": product["name"],
-        "description": product.get("description"),
-        "price": product["price"],
-        "quantity": product["quantity"]
-    }
-
-async def create_product(product: Product):
-    result = await product_collection.insert_one(product.dict())
-    new_product = await product_collection.find_one({"_id": result.inserted_id})
-    return product_helper(new_product)
-
-async def get_products():
+async def get_products(search: str = None):
+    query = {}
+    if search:
+        query = {
+            "$or": [
+                {"name": {"$regex": search, "$options": "i"}},
+                {"category": {"$regex": search, "$options": "i"}}
+            ]
+        }
     products = []
-    async for product in product_collection.find():
-        products.append(product_helper(product))
+    async for p in product_collection.find(query):
+        p["_id"] = str(p["_id"])
+        if "category_id" in p:
+            p["category_id"] = str(p["category_id"])
+        products.append(p)
     return products
 
-async def get_product_by_id(product_id: str):
-    product = await product_collection.find_one({"_id": ObjectId(product_id)})
-    if product:
-        return product_helper(product)
-    return None
+async def create_product(product_data):
+    print("Route hit with product:", product)
+    try:
+        result = await product_collection.insert_one(product_data)
+        print("Insert result:", result)
+        product_data["_id"] = str(result.inserted_id)
+        print("Product after insert:", product_data)
+        return product_data
+    except Exception as e:
+        print("Error inserting product:", e)
+        raise HTTPException(status_code=500, detail=f"Failed to create product: {e}")
 
-async def update_product(product_id: str, data: dict):
-    await product_collection.update_one(
-        {"_id": ObjectId(product_id)},
-        {"$set": data}
-    )
-    updated_product = await product_collection.find_one({"_id": ObjectId(product_id)})
-    if updated_product:
-        return product_helper(updated_product)
-    return None
+async def update_product(product_id: str, product_data):
+    try:
+        await product_collection.update_one({"_id": ObjectId(product_id)}, {"$set": product_data})
+        product_data["_id"] = product_id
+        return product_data
+    except Exception as e:
+        print("Error updating product:", e)
+        raise HTTPException(status_code=500, detail=f"Failed to update product: {e}")
 
 async def delete_product(product_id: str):
-    result = await product_collection.delete_one({"_id": ObjectId(product_id)})
-    return result.deleted_count > 0
+    try:
+        await product_collection.delete_one({"_id": ObjectId(product_id)})
+        return {"detail": "Product deleted"}
+    except Exception as e:
+        print("Error deleting product:", e)
+        raise HTTPException(status_code=500, detail=f"Failed to delete product: {e}")

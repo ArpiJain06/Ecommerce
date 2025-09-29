@@ -1,8 +1,23 @@
 from pydantic import BaseModel
 from typing import Optional
 
-class ProductSchema(BaseModel):
+class ProductBase(BaseModel):
     name: str
+    description: Optional[str] = None
     price: float
-    category: str
-    description: Optional[str]
+    category_id: str
+
+class ProductCreate(ProductBase):
+    name: str
+    category_id: str
+    price: float
+    description: Optional[str] = None
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    category_id: Optional[str] = None
+
+class ProductOut(ProductBase):
+    id: str
