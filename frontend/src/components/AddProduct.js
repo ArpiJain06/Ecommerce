@@ -1,0 +1,66 @@
+import { useState } from "react";
+import axios from "axios";
+
+const AddProduct = () => {
+  const [name, setName] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Build the payload
+    const payload = {
+      name,
+      category_id: categoryId,
+      price: parseFloat(price),
+      ...(description && { description }) // only include if non-empty
+    };
+
+    // Print payload to frontend console
+    console.log("Payload being sent:", payload);
+
+    try {
+      const response = await axios.post("http://127.0.0.1:8000/products", payload);
+      console.log("Product added:", response.data);
+      
+      // Optionally clear form
+      setName("");
+      setCategoryId("");
+      setPrice("");
+      setDescription("");
+    } catch (err) {
+      console.error("Error adding product:", err.response?.data || err);
+    }
+  };
+
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        placeholder="Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <input
+        placeholder="Category ID"
+        value={categoryId}
+        onChange={(e) => setCategoryId(e.target.value)}
+      />
+      <input
+        placeholder="Price"
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
+      />
+      <input
+        placeholder="Description"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
+      <button type="submit">Add Product</button>
+    </form>
+  );
+};
+
+export default AddProduct;

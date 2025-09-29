@@ -2,35 +2,43 @@ import axios from "axios";
 
 const API_URL = "http://localhost:8000"; // Your FastAPI URL
 
-export const loginUser = async (email, password) => {
-  const res = await axios.post(`${API_URL}/login`, { email, password });
-  return res.data; // { token, role, name }
+// Fetch all products (no auth required)
+export const getProducts = async () => {
+  try {
+    const res = await axios.get(`${API_URL}/products`);
+    // Ensure _id is string for React keys
+    return res.data.map((p) => ({ ...p, _id: String(p._id) }));
+  } catch (err) {
+    console.error("Failed to fetch products:", err);
+    return []; // fallback
+  }
 };
 
-export const getProducts = async (token) => {
-  const res = await axios.get(`${API_URL}/products`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const addProduct = async (product) => {
+  console.log("ppp", product);
+  // const res = await axios.post(`${API_URL}/products`, product);
+  const res = axios.post("http://localhost:8000/products", product, {
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
   return res.data;
 };
 
-export const addProduct = async (token, product) => {
-  const res = await axios.post(`${API_URL}/products`, product, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+// Update a product (admin functionality)
+export const updateProduct = async (id, product) => {
+  const res = await axios.put(`${API_URL}/products/${id}`, product);
   return res.data;
 };
 
-export const updateProduct = async (token, id, product) => {
-  const res = await axios.put(`${API_URL}/products/${id}`, product, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+// Delete a product (admin functionality)
+export const deleteProduct = async (id) => {
+  const res = await axios.delete(`${API_URL}/products/${id}`);
   return res.data;
 };
 
-export const deleteProduct = async (token, id) => {
-  const res = await axios.delete(`${API_URL}/products/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+// Fetch categories
+export const getCategories = async () => {
+  const res = await axios.get(`${API_URL}/categories`);
   return res.data;
 };

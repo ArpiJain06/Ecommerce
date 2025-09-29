@@ -1,27 +1,16 @@
 from ..database import user_collection
-import logging
+from bson import ObjectId 
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-async def login(login_input: str, password: str):
-    logger.info(f"Login attempt: login_input={login_input}, password={password}")  # Debug input
-
-    # Query by username or email
+async def login(login: str, password: str):
     user = await user_collection.find_one({
-        "$or": [{"username": login_input}, {"email": login_input}]
+        "$or": [{"username": login}, {"email": login}]
     })
-    
-    if not user:
-        logger.info("User not found")
+    if not user or user["password"] != password:
         return None
 
-    logger.info(f"Found user: {user}")
-
-    if user['password'] != password:
-        logger.info("Password mismatch")
-        return None
-
-    logger.info("Login successful")
-    return {"username": user["username"], "role": user["role"], "id": str(user["_id"])}
+    return {
+        "username": user["username"],
+        "email": user.get("email"),
+        "role": user["role"],
+        "user_id": str(user["_id"])
+    }

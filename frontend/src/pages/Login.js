@@ -1,37 +1,36 @@
 import { useState, useContext } from "react";
-import { Button, TextField, Container, Typography, InputAdornment, IconButton } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { loginUser } from "../api/api";
+import { Container, Typography, TextField, Button } from "@mui/material";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-const Login = () => {
-  const [loginInput, setLoginInput] = useState(""); // username or email
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+const LoginPage = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const [loginInput, setLoginInput] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     try {
-      const data = await loginUser(loginInput, password);
-      login(data);
-
-      if (data.role === "admin") navigate("/admin");
-      else navigate("/user");
-    } catch (err) {
+      const res = await axios.post("http://127.0.0.1:8000/login", {
+        login: loginInput,
+        password,
+      });
+      login(res.data);
+      navigate(res.data.role === "admin" ? "/admin" : "/user");
+    } catch {
       setError("Invalid username/email or password");
     }
   };
 
-  const togglePassword = () => setShowPassword(!showPassword);
-
   return (
-    <Container maxWidth="sm" sx={{ mt: 10 }}>
+    <Container maxWidth="xs" sx={{ mt: 10 }}>
       <Typography variant="h4" align="center" gutterBottom>
-        Apni Dukaan Login
+        Login
       </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
@@ -44,23 +43,14 @@ const Login = () => {
         />
         <TextField
           label="Password"
+          type="password"
           fullWidth
           required
           margin="normal"
-          type={showPassword ? "text" : "password"}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={togglePassword} edge="end">
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
         />
-        {error && <Typography color="error">{error}</Typography>}
+        {error && <Typography color="error" sx={{ mt: 1 }}>{error}</Typography>}
         <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
           Login
         </Button>
@@ -69,4 +59,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default LoginPage;

@@ -7,6 +7,11 @@ const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <AppBar position="static">
       <Toolbar>
@@ -16,7 +21,7 @@ const Navbar = () => {
         {user ? (
           <>
             <Typography sx={{ mr: 2 }}>{user.name}</Typography>
-            <Button color="inherit" onClick={() => { logout(); navigate("/"); }}>
+            <Button color="inherit" onClick={handleLogout}>
               Logout
             </Button>
           </>

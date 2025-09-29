@@ -3,13 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { CartProvider } from './context/CartContext';
-
-const theme = createTheme({
-  palette: {
-    primary: { main: '#1976d2' },
-    secondary: { main: '#f50057' },
-  },
-});
+import theme from "./theme";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

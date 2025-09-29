@@ -8,15 +8,27 @@ export const AuthProvider = ({ children }) => {
   );
 
   const login = (data) => {
-    setUser(data);
-    localStorage.setItem("user", JSON.stringify(data));
+    // Ensure we store userId (not user_id)
+    setUser({
+      userId: data.user_id, // must match backend param
+      name: data.username,
+      role: data.role,
+    });
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        userId: data.user_id,
+        name: data.username,
+        role: data.role,
+      })
+    );
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
   };
-
+  
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
       {children}
