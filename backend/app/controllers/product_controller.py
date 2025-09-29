@@ -20,7 +20,6 @@ async def get_products(search: str = None):
     return products
 
 async def create_product(product_data):
-    print("Route hit with product:", product)
     try:
         result = await product_collection.insert_one(product_data)
         print("Insert result:", result)
