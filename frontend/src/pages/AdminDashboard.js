@@ -9,7 +9,7 @@ import {
   CardActions,
 } from "@mui/material";
 import Masonry from "react-masonry-css";
-import { getProducts, addProduct, deleteProduct } from "../api/api";
+import { getProducts, addProduct, deleteProduct } from "../api/product";
 import { AuthContext } from "../context/AuthContext";
 
 const AdminDashboard = () => {

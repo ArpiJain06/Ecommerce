@@ -1,6 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 
+export const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
+
 const AddProduct = () => {
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -20,7 +22,7 @@ const AddProduct = () => {
     console.log("Payload being sent:", payload);
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/products", payload);
+      const response = await axios.post(`API_URL`, payload);
       console.log("Product added:", response.data);
       
       setName("");
