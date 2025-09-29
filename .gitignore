@@ -40,3 +40,4 @@ dist/
 app/test_db.py
 app/seed.py
 
+node_modules/
