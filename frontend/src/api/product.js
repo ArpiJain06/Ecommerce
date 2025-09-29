@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8000";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 // Fetch all products (no auth required)
 export const getProducts = async () => {
@@ -17,7 +17,7 @@ export const getProducts = async () => {
 export const addProduct = async (product) => {
   console.log("ppp", product);
   // const res = await axios.post(`${API_URL}/products`, product);
-  const res = axios.post("http://localhost:8000/products", product, {
+  const res = axios.post(`${API_URL}/products`, product, {
     headers: {
       "Content-Type": "application/json"
     }

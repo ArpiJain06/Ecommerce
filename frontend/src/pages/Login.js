@@ -4,6 +4,8 @@ import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+export const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
+
 const LoginPage = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -16,7 +18,7 @@ const LoginPage = () => {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post("http://127.0.0.1:8000/login", {
+      const res = await axios.post(`${API_URL}/login`, {
         login: loginInput,
         password,
       });
