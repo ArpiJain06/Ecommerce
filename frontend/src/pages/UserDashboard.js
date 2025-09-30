@@ -20,11 +20,15 @@ const UserDashboard = () => {
   const [loadingCart, setLoadingCart] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch products from API
-  const fetchProducts = useCallback(async (search = "") => {
+ // Fetch products from API
+ const fetchProducts = useCallback(async (search = "", category = "") => {
     setLoadingProducts(true);
     try {
-      const data = await getProducts(search);
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (category) params.append("category_id", category);
+
+      const data = await getProducts(params.toString()); 
       setProducts(Array.isArray(data) ? data : data ? [data] : []);
     } catch (err) {
       console.error("Failed to fetch products:", err);
