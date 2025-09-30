@@ -1,9 +1,18 @@
 from fastapi import APIRouter
-from ..controllers.product_controller import get_products, create_product, update_product, delete_product
+from ..controllers.product_controller import get_products, create_product, update_product, delete_product, upload_image, get_image
 from ..schemas.product_schema import ProductCreate
 from bson import ObjectId
+from fastapi import UploadFile, HTTPException
 
 router = APIRouter()
+
+@router.get("/images/{file_id}")
+async def get_image_route(file_id: str):
+    return await get_image(file_id)
+
+@router.post("/upload-image")
+async def upload_image_route(file : UploadFile):
+    return await upload_image(file)
 
 @router.get("/products")
 async def get_products_route(search: str = None):

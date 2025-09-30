@@ -1,52 +1,31 @@
-import { useEffect, useState, useCallback, useContext } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import {
-  Container,
   Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
   Box,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Paper,
   CircularProgress,
+  TextField,
+  Button,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
+import Masonry from "react-masonry-css";
+import ProductCard from "../components/ProductCard";
 import { getCart, addToCart, removeFromCart } from "../api/cart";
 import { getProducts } from "../api/product";
 import { AuthContext } from "../context/AuthContext";
 
 const UserDashboard = () => {
-  const { user } = useContext(AuthContext); 
+  const { user } = useContext(AuthContext);
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [loadingCart, setLoadingCart] = useState(true);
-
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingCart, setLoadingCart] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState([]);
 
-  useEffect(() => {
-    if (!searchQuery) {
-      setFilteredProducts(products);
-    } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredProducts(
-        products.filter((p) => p.name.toLowerCase().includes(query))
-      );
-    }
-  }, [searchQuery, products]);
-
-  const fetchProducts = useCallback(async () => {
+  // Fetch products from API
+  const fetchProducts = useCallback(async (search = "") => {
     setLoadingProducts(true);
     try {
-      const data = await getProducts();
-      setProducts(data || []);
+      const data = await getProducts(search);
+      setProducts(Array.isArray(data) ? data : data ? [data] : []);
     } catch (err) {
       console.error("Failed to fetch products:", err);
       setProducts([]);
@@ -55,10 +34,10 @@ const UserDashboard = () => {
     }
   }, []);
 
+  // Fetch cart for user
   const fetchCart = useCallback(async () => {
-    if (!user || !user.userId) {
+    if (!user?.userId) {
       setCart([]);
-      setLoadingCart(false);
       return;
     }
     setLoadingCart(true);
@@ -73,8 +52,9 @@ const UserDashboard = () => {
     }
   }, [user]);
 
+  // Handle add/remove cart
   const handleAddToCart = async (productId) => {
-    if (!user || !user.userId) return;
+    if (!user?.userId) return;
     try {
       const updatedCart = await addToCart(user.userId, productId);
       setCart(updatedCart.items || []);
@@ -84,7 +64,7 @@ const UserDashboard = () => {
   };
 
   const handleRemoveFromCart = async (productId) => {
-    if (!user || !user.userId) return;
+    if (!user?.userId) return;
     try {
       const updatedCart = await removeFromCart(user.userId, productId);
       setCart(updatedCart.items || []);
@@ -93,6 +73,7 @@ const UserDashboard = () => {
     }
   };
 
+  // Initial fetch
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -101,125 +82,76 @@ const UserDashboard = () => {
     fetchCart();
   }, [fetchCart]);
 
-  if (!user) return <Typography>Loading user info...</Typography>;
+  const isInCart = (productId) => cart.some((item) => item._id === productId);
 
-  const cartTotal = cart.reduce(
-    (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
-    0
-  );
+  const breakpointColumnsObj = {
+    default: 4,
+    1200: 3,
+    900: 2,
+    600: 1,
+  };
+
+  if (!user) return <Typography>Loading user info...</Typography>;
+  if (loadingProducts)
+    return <CircularProgress sx={{ display: "block", mx: "auto", mt: 5 }} />;
 
   return (
-    <Container sx={{ mt: 5 }}>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ mt: 5, px: 3 }}>
+      <Typography variant="h4" align="center" gutterBottom sx={{ mb: 3 }}>
         Welcome, {user.name || user.userId}
       </Typography>
 
-      <Box sx={{ mb: 2, display: "flex", gap: 1 }}>
-        <input
-          type="text"
+      {/* Search Bar */}
+      <Box sx={{ mb: 4, display: "flex", justifyContent: "center", gap: 1 }}>
+        <TextField
           placeholder="Search products..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ flex: 1, padding: "8px", fontSize: "16px" }}
+          sx={{ width: 300 }}
+          size="small"
         />
         <Button
           variant="contained"
           color="primary"
-          onClick={() =>
-            setFilteredProducts(
-              products.filter((p) =>
-                p.name.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-            )
-          }
+          onClick={() => fetchProducts(searchQuery)}
         >
           Search
         </Button>
       </Box>
 
-      <Grid container spacing={2}>
-        {filteredProducts.map((product) => (
-          <Grid item xs={12} sm={6} md={4} key={product._id}>
-            <Card
-              sx={{
-                height: 200,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-              }}
-            >
-              <CardContent>
-                <Typography variant="h6">{product.name}</Typography>
-                <Typography color="text.secondary">${product.price}</Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleAddToCart(product._id)}
-                >
-                  Add to Cart
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+      {/* Products Masonry */}
+      <Masonry
+        breakpointCols={breakpointColumnsObj}
+        className="my-masonry-grid"
+        columnClassName="my-masonry-grid_column"
+      >
+        {products.map((product) => (
+          <ProductCard
+            key={product._id}
+            product={product}
+            onAddToCart={handleAddToCart}
+            onRemoveFromCart={handleRemoveFromCart}
+            inCart={isInCart(product._id)}
+            userRole="user"
+          />
         ))}
-      </Grid>
+      </Masonry>
 
-      {/* Cart Section */}
-      <Grid container spacing={2} sx={{ mt: 4 }}>
-        <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 2, position: "sticky", top: 20 }}>
-            <Typography variant="h5" gutterBottom>
-              Your Cart
-            </Typography>
-
-            {loadingCart ? (
-              <Box display="flex" justifyContent="center" mt={2}>
-                <CircularProgress />
-              </Box>
-            ) : cart.length === 0 ? (
-              <Typography>Your cart is empty.</Typography>
-            ) : (
-              <List>
-                {cart.map((item) => (
-                  <ListItem
-                    key={item._id}
-                    secondaryAction={
-                      <IconButton
-                        edge="end"
-                        onClick={() => handleRemoveFromCart(item._id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    }
-                  >
-                    <ListItemText
-                      primary={item.name}
-                      secondary={`$${item.price} x ${item.quantity || 1}`}
-                    />
-                  </ListItem>
-                ))}
-                <Divider sx={{ my: 1 }} />
-                <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                  Total: ${cartTotal.toFixed(2)}
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  fullWidth
-                  sx={{ mt: 2 }}
-                  disabled={cart.length === 0}
-                >
-                  Checkout
-                </Button>
-              </List>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
-    </Container>
+      <style>{`
+        .my-masonry-grid {
+          display: flex;
+          margin-left: -16px;
+          width: auto;
+        }
+        .my-masonry-grid_column {
+          padding-left: 16px;
+          background-clip: padding-box;
+        }
+        .my-masonry-grid_column > div {
+          margin-bottom: 16px;
+        }
+      `}</style>
+    </Box>
   );
 };
 

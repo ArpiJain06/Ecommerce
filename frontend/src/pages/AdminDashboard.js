@@ -1,65 +1,73 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import {
   Typography,
-  Button,
-  TextField,
   Box,
-  Card,
-  CardContent,
-  CardActions,
+  CircularProgress,
+  TextField,
+  Button,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import Masonry from "react-masonry-css";
-import { getProducts, addProduct, deleteProduct } from "../api/product";
+import ProductCard from "../components/ProductCard";
+import { getProducts, deleteProduct } from "../api/product";
+import { getCategories } from "../api/category.js"; // you'll need to create this API call
 import { AuthContext } from "../context/AuthContext";
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const [products, setProducts] = useState([]);
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    price: "",
-    category: "",
-    description: "",
-  });
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
 
-  const fetchProducts = async () => {
-    const data = await getProducts();
-    setProducts(data);
-  };
+ // Fetch products from API
+  const fetchProducts = useCallback(async (search = "", category = "") => {
+    setLoadingProducts(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (category) params.append("category_id", category);
 
-  useEffect(() => {
-    fetchProducts();
+      const data = await getProducts(params.toString()); 
+      setProducts(Array.isArray(data) ? data : data ? [data] : []);
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+      setProducts([]);
+    } finally {
+      setLoadingProducts(false);
+    }
   }, []);
 
-  const handleAdd = async () => {
-    if (!newProduct.name || !newProduct.price || !newProduct.category || !newProduct.description) {
-    alert("All fields are required");
-    return;
-    }
+  // Fetch categories from API
+  const fetchCategories = useCallback(async () => {
     try {
-      const productToSend = {
-        name: newProduct.name,
-        price: parseFloat(newProduct.price),
-        category_id: newProduct.category,
-        description: newProduct.description,
-      };
-      console.log("aaaaaaa", productToSend);
-      console.log("aa", newProduct);
-      
-      await addProduct( productToSend);
-
-      setNewProduct({ name: "", price: "", category: "", description: "" });
-      fetchProducts();
+      const data = await getCategories();
+      setCategories(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err.response?.data || err.message);
-      alert("Failed to add product. Check console for details.");
+      console.error("Failed to fetch categories:", err);
+      setCategories([]);
+    }
+  }, []);
+
+  // Delete product
+  const handleDelete = async (id) => {
+    try {
+      await deleteProduct(id);
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const handleDelete = async (id) => {
-    await deleteProduct(id);
+  // Initial fetch
+  useEffect(() => {
     fetchProducts();
-  };
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
 
   const breakpointColumnsObj = {
     default: 4,
@@ -68,123 +76,54 @@ const AdminDashboard = () => {
     600: 1,
   };
 
+  if (loadingProducts)
+    return <CircularProgress sx={{ display: "block", mx: "auto", mt: 5 }} />;
+
   return (
     <Box sx={{ mt: 5, px: 3 }}>
-      <Typography variant="h4" align="center" gutterBottom>
+      <Typography variant="h4" align="center" gutterBottom sx={{ mb: 3 }}>
         Admin Dashboard
       </Typography>
 
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          mb: 5,
-          maxWidth: 600,
-          mx: "auto",
-          p: 3,
-          borderRadius: 2,
-          boxShadow: 1,
-          backgroundColor: "#fff",
-        }}
-      >
-        <Typography variant="h6">Add New Product</Typography>
+      {/* Search and Category Filter */}
+      <Box sx={{ mb: 4, display: "flex", justifyContent: "center", gap: 1 }}>
         <TextField
-          label="Product Name"
-          value={newProduct.name}
-          onChange={(e) =>
-            setNewProduct({ ...newProduct, name: e.target.value })
-          }
+          placeholder="Search products..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           size="small"
+          sx={{ width: 250 }}
         />
-        <TextField
-          label="Price"
-          type="number"
-          value={newProduct.price}
-          onChange={(e) =>
-            setNewProduct({ ...newProduct, price: e.target.value })
-          }
-          size="small"
-        />
-        <TextField
-          label="Category"
-          value={newProduct.category}
-          onChange={(e) =>
-            setNewProduct({ ...newProduct, category: e.target.value })
-          }
-          size="small"
-        />
-        <TextField
-          label="Description"
-          multiline
-          rows={3}
-          value={newProduct.description}
-          onChange={(e) =>
-            setNewProduct({ ...newProduct, description: e.target.value })
-          }
-          size="small"
-        />
-        <Button variant="contained" color="primary" onClick={handleAdd}>
-          Add Product
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => fetchProducts(searchQuery, selectedCategory)}
+        >
+          Search
         </Button>
       </Box>
 
-      {/* Masonry Product Grid */}
+
+      {/* Products Masonry */}
       <Masonry
         breakpointCols={breakpointColumnsObj}
         className="my-masonry-grid"
         columnClassName="my-masonry-grid_column"
       >
-        {products.map((p) => (
-          <Card
-            key={p._id}
-            sx={{
-              borderRadius: 2,
-              boxShadow: 1,
-            }}
-          >
-            <CardContent>
-              <Typography variant="h6">{p.name}</Typography>
-              <Typography color="text.secondary" sx={{ mb: 1 }}>
-                ${p.price}
-              </Typography>
-              {p.category && (
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  Category: {p.category}
-                </Typography>
-              )}
-              {p.description && (
-                <Typography variant="body2">{p.description}</Typography>
-              )}
-            </CardContent>
-            <CardActions>
-              <Button
-                variant="outlined"
-                color="error"
-                fullWidth
-                onClick={() => handleDelete(p._id)}
-              >
-                Delete
-              </Button>
-            </CardActions>
-          </Card>
+        {products.map((product) => (
+          <ProductCard
+            key={product._id}
+            product={product}
+            onDelete={handleDelete}
+            userRole={user?.role}
+          />
         ))}
       </Masonry>
 
-      {/* Masonry CSS */}
       <style>{`
-        .my-masonry-grid {
-          display: flex;
-          margin-left: -16px;
-          width: auto;
-        }
-        .my-masonry-grid_column {
-          padding-left: 16px;
-          background-clip: padding-box;
-        }
-        .my-masonry-grid_column > div {
-          margin-bottom: 16px;
-        }
+        .my-masonry-grid { display: flex; margin-left: -16px; width: auto; }
+        .my-masonry-grid_column { padding-left: 16px; background-clip: padding-box; }
+        .my-masonry-grid_column > div { margin-bottom: 16px; }
       `}</style>
     </Box>
   );

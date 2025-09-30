@@ -4,10 +4,13 @@ import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { login as fetchLogin } from "./api/auth"; 
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
-import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import { getCart } from "./api/cart";
 import Login from "./pages/Login"; 
+
+// <-- Add these imports
+import AddProductForm from "./pages/AddProductForm";
+import Cart from "./pages/Cart";
 
 const App = () => {
   return (
@@ -26,7 +29,9 @@ const App = () => {
               <UserDashboardWithCart />
             </ProtectedRoute>
           } />
-          <Route path="*" element={<NotFound />} />
+          <Route path="/add-product" element={<AddProductForm />} />
+          <Route path="/edit-product/:id" element={<AddProductForm />} />
+          <Route path="/cart" element={<Cart />} />
         </Routes>
       </Router>
     </AuthProvider>
@@ -38,7 +43,6 @@ const LoginWrapper = () => {
   const { setUser } = useContext(AuthContext);
 
   const handleLogin = async (loginData) => {
-    // loginData should include username/email and password
     try {
       const loginResponse = await fetchLogin(loginData); // your API call
       setUser({
@@ -59,7 +63,7 @@ const UserDashboardWithCart = () => {
   const [cart, setCart] = useState([]);
 
   useEffect(() => {
-    const fetchCart = async () => {
+    const fetchCartData = async () => {
       if (!user) return;
       try {
         const cartData = await getCart(user.userId);
@@ -68,7 +72,7 @@ const UserDashboardWithCart = () => {
         console.error("Failed to fetch cart", err);
       }
     };
-    fetchCart();
+    fetchCartData();
   }, [user]);
 
   return <UserDashboard cart={cart} />;
